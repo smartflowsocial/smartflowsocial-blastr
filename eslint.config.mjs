@@ -154,6 +154,12 @@ export default [
     },
   },
   {
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
     files: ["tests/**/*.ts"],
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "warn",
