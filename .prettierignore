@@ -1,0 +1,8 @@
+node_modules
+build
+coverage
+.wrangler
+*.log
+*.tsbuildinfo
+rust
+pnpm-lock.yaml

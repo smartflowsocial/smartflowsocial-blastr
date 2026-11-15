@@ -1,0 +1,13 @@
+# Dependencies and build artifacts
+/node_modules
+build/
+dist/
+coverage/
+tsconfig.tsbuildinfo
+
+# Cloudflare / local
+.dev.vars
+.wrangler
+
+# OS
+.DS_Store

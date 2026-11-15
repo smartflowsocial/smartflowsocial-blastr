@@ -1,0 +1,33 @@
+name: Tests
+
+on:
+  pull_request:
+
+jobs:
+  website:
+    name: Build WASM binary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build WASM when a Cargo project exists
+        run: |
+          if [ ! -f Cargo.toml ]; then
+            echo "No Cargo.toml. This repository is a TypeScript worker and has no WASM crate."
+            exit 0
+          fi
+          echo "Cargo.toml exists, but the WASM build is not configured."
+          exit 1
+
+  rust_tests:
+    name: Rust Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check Rust when a Cargo project exists
+        run: |
+          if [ ! -f Cargo.toml ]; then
+            echo "No Cargo.toml. Skipping rustfmt and clippy."
+            exit 0
+          fi
+          echo "Cargo.toml exists, but Rust checks are not configured."
+          exit 1
