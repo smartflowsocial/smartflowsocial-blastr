@@ -1,15 +1,23 @@
 name: Publish
 
-# This workflow still listens to master. The organization repository's default
-# branch is main, so a push to main does not deploy. Do not retarget it until
-# the owner confirms this is the production path.
+# Manual production deploy. Pushing main or master does not deploy.
+# The previous workflow listened to master, which is not this repository's
+# default branch, so a push to main never published the worker. Turning that
+# trigger into a push to main would enable automatic production deployment.
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type deploy-production to publish the production worker
+        required: true
+        type: string
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
+    if: github.event.inputs.confirm == 'deploy-production'
     runs-on: ubuntu-latest
     name: Deploy
     steps:

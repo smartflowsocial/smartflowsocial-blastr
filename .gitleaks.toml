@@ -1,0 +1,8 @@
+title = "SmartFlowSocial blastr scan"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documentation placeholder in the admin curl example. This is not a credential."
+regexes = ['''YOUR_API_TOKEN''']

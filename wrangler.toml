@@ -48,11 +48,12 @@ kv_namespaces = [
 [[env.staging.d1_databases]]
 binding = "DB"
 database_name = "blastr-db-staging"
+# Staging must not consume the production queue.
 [[env.staging.queues.producers]]
-queue = "blastr-publish-jobs"
+queue = "blastr-publish-jobs-staging"
 binding = "BLASTR_PUBLISH_QUEUE"
 [[env.staging.queues.consumers]]
-queue = "blastr-publish-jobs"
+queue = "blastr-publish-jobs-staging"
 max_batch_size = 50
 max_batch_timeout = 1
 max_retries = 3
