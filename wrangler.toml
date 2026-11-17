@@ -43,7 +43,7 @@ NOSTRMASH_API_BASE = "https://api.nostrmash.com"
 
 [[previews.queues.producers]]
 binding = "BLASTR_PUBLISH_QUEUE"
-queue = "blastr-publish-jobs-staging"
+queue = "blastr-publish-jobs-preview"
 
 # Optional: routes when deploying to your domain
 # routes = [{ pattern = "blastr.smartflow.social/", zone_id = "YOUR_ZONE_ID" }]
