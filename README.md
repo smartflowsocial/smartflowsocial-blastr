@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/smartflowsocial/smartflowsocial-blastr/actions/workflows/ci.yml/badge.svg)](https://github.com/smartflowsocial/smartflowsocial-blastr/actions/workflows/ci.yml)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue)](LICENSE)
-[![Node 20+](https://img.shields.io/badge/node-20%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Node 26.13.1+](https://img.shields.io/badge/node-26.13.1%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/maintained%20with-pnpm-cc00ff.svg)](https://pnpm.io/)
 
 Blastr is the **SmartFlowSocial broadcast relay** — a write-focused managed Nostr relay that accepts signed Nostr events (WebSocket or HTTP), enforces **pubkey-scoped entitlement** (paid subscription), applies per-pubkey **relay policy** (blacklist/whitelist), and fans out to a bounded **system relay universe**—all keyed by the event author’s pubkey, so behavior is consistent from any client (SFS app, Damus, Coracle, etc.).
@@ -328,7 +328,7 @@ Coverage thresholds are enforced in `vitest.config.ts`.
 
 ## CI/CD
 
-- **CI** (`.github/workflows/ci.yml`) — On push/PR: validate, unit tests, integration tests, coverage. Uses Node 20 and pnpm 10.27.0 with frozen lockfile.
+- **CI** (`.github/workflows/ci.yml`) — On push/PR: validate, unit tests, integration tests, coverage. Uses Node 26.13.1 and pnpm 10.27.0 with frozen lockfile.
 - **Deploy** — Set `CF_API_TOKEN` (and optionally routes in `wrangler.toml`), then `pnpm deploy` or your own workflow. Staging: `pnpm deploy --env staging`.
 
 ---
