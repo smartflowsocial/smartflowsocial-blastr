@@ -4,7 +4,7 @@ Thank you for your interest in contributing. This document explains how to run c
 
 ## Before you start
 
-- **Node.js** ≥20 and **pnpm** 10.x are required.
+- **Node.js** 26.13.1 or newer (`.nvmrc`) and **pnpm** 10.x are required.
 - Install dependencies: `pnpm install`.
 - Run the full validation and test suite locally before opening a pull request.
 
