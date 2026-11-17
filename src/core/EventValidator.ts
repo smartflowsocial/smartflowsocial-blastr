@@ -9,8 +9,7 @@ export interface ValidationResult {
 }
 
 export type ValidateEventResult =
-  | ValidationResult
-  | { ok: false; error: BlastrError };
+  ValidationResult | { ok: false; error: BlastrError };
 
 /**
  * Validates Nostr event: shape, kind, size, and signature.

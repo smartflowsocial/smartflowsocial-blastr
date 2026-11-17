@@ -36,6 +36,15 @@ crons = ["*/15 * * * *"]
 ENVIRONMENT = "production"
 NOSTRMASH_API_BASE = "https://api.nostrmash.com"
 
+# Pull-request previews must not publish onto the production queue.
+[previews.vars]
+ENVIRONMENT = "preview"
+NOSTRMASH_API_BASE = "https://api.nostrmash.com"
+
+[[previews.queues.producers]]
+binding = "BLASTR_PUBLISH_QUEUE"
+queue = "blastr-publish-jobs-staging"
+
 # Optional: routes when deploying to your domain
 # routes = [{ pattern = "blastr.smartflow.social/", zone_id = "YOUR_ZONE_ID" }]
 
