@@ -54,6 +54,7 @@ describe("queue consumer ack behavior", () => {
         },
       ],
       queue: QUEUE_NAME,
+      metadata: { metrics: { backlogCount: 0, backlogBytes: 0 } },
       retryAll: vi.fn(),
       ackAll: vi.fn(),
     };
@@ -84,6 +85,7 @@ describe("queue consumer ack behavior", () => {
         },
       ],
       queue: QUEUE_NAME,
+      metadata: { metrics: { backlogCount: 0, backlogBytes: 0 } },
       retryAll: vi.fn(),
       ackAll: vi.fn(),
     };
@@ -125,6 +127,7 @@ describe("queue consumer ack behavior", () => {
         },
       ],
       queue: QUEUE_NAME,
+      metadata: { metrics: { backlogCount: 0, backlogBytes: 0 } },
       retryAll: vi.fn(),
       ackAll: vi.fn(),
     };

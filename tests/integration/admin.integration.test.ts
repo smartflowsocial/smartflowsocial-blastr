@@ -1,7 +1,4 @@
-import type {
-  ExecutionContext,
-  IncomingRequestCfProperties,
-} from "@cloudflare/workers-types";
+import type { ExecutionContext } from "@cloudflare/workers-types";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import * as db from "../../src/services/db";
@@ -76,11 +73,7 @@ async function adminFetch(
     headers,
   });
   const ctx = {} as ExecutionContext; // eslint-disable-line @typescript-eslint/consistent-type-assertions -- test mock
-  return handler.fetch(
-    request as Request<unknown, IncomingRequestCfProperties<unknown>>,
-    env,
-    ctx,
-  );
+  return handler.fetch(request, env, ctx);
 }
 
 describe("Admin integration", () => {

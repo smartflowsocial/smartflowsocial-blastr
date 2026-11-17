@@ -24,10 +24,9 @@ function createMockServerWebSocket(): {
   let errorListener: (() => void) | undefined;
   const addEventListener = vi.fn(
     (event: string, listener: (e?: MessageEvent) => void) => {
-      if (event === "message")
-        messageListener = listener as (e: MessageEvent) => void;
-      if (event === "close") closeListener = listener as () => void;
-      if (event === "error") errorListener = listener as () => void;
+      if (event === "message") messageListener = listener;
+      if (event === "close") closeListener = listener;
+      if (event === "error") errorListener = listener;
     },
   );
   return {

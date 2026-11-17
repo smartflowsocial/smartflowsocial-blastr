@@ -123,7 +123,7 @@ describe("Auth (API_TOKEN)", () => {
         constructor() {
           return [{}, mockServer];
         }
-      } as unknown;
+      };
     const OriginalResponse = globalThis.Response;
     globalThis.Response = class extends OriginalResponse {
       constructor(
@@ -139,7 +139,7 @@ describe("Auth (API_TOKEN)", () => {
         }
         super(body ?? null, init);
       }
-    } as typeof Response;
+    };
     const mod = await import("../../src/index");
     const handler = mod.default;
     if (!handler.fetch) throw new Error(ERR_FETCH_UNDEFINED);

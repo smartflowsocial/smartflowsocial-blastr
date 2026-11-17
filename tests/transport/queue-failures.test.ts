@@ -69,6 +69,7 @@ describe("Queue consumer failure paths", () => {
         },
       ],
       queue: "blastr-publish-jobs",
+      metadata: { metrics: { backlogCount: 0, backlogBytes: 0 } },
       retryAll: vi.fn(),
       ackAll: vi.fn(),
     };
@@ -126,6 +127,7 @@ describe("Queue consumer failure paths", () => {
         },
       ],
       queue: "blastr-publish-jobs",
+      metadata: { metrics: { backlogCount: 0, backlogBytes: 0 } },
       retryAll: vi.fn(),
       ackAll: vi.fn(),
     };
