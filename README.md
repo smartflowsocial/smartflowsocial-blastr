@@ -231,22 +231,22 @@ See [docs/API.md](docs/API.md) for request/response details.
 
 ## First-time setup (before first deploy)
 
-Checked-in `wrangler.toml` ids are placeholders. `wrangler deploy` fails until you replace `REPLACE_WITH_PUBLISHED_NOTES_KV_ID`, `REPLACE_WITH_PUBLISHED_NOTES_KV_PREVIEW_ID`, `REPLACE_WITH_BLASTR_RATE_LIMIT_KV_ID`, `REPLACE_WITH_BLASTR_RATE_LIMIT_KV_PREVIEW_ID`, `REPLACE_WITH_BLASTR_D1_ID`, and the `REPLACE_WITH_STAGING_*` values under `[env.staging]`.
+Checked-in `wrangler.toml` does not contain Cloudflare resource ids. Wrangler 4 provisions the `PUBLISHED_NOTES` and `BLASTR_RATE_LIMIT` KV namespaces on deploy. D1 is declared as `blastr-db` (staging: `blastr-db-staging`). The queue name is `blastr-publish-jobs` for both production and staging. Do not paste invented ids into the file.
 
-**Production deploy checklist:** (1) Create Queue and KV namespaces in the same Cloudflare account you deploy from; (2) Create D1, run migrations, add IDs to `wrangler.toml`; (3) Set `API_TOKEN` (and optionally `CORS_ORIGINS`) as secrets or in env; (4) Run `pnpm deploy`. See [docs/OPERATIONS.md](docs/OPERATIONS.md) for runbooks.
+**Production deploy checklist:** (1) Create the queue in the same Cloudflare account you deploy from; (2) Create the D1 databases and run migrations; (3) Set `API_TOKEN` with `wrangler secret put API_TOKEN` (and `--env staging` for staging). Do not commit the token. (4) Run `pnpm deploy`. See [docs/OPERATIONS.md](docs/OPERATIONS.md) for runbooks.
 
-**Deploy will fail** if the Queue and KV namespaces don’t exist. Do this once before deploying (or before connecting Git to Cloudflare):
+**Deploy will fail** if the queue does not exist. Do this once before deploying (or before connecting Git to Cloudflare):
 
 1. **Create the Queue** (required; deploy fails without it):
    ```bash
    wrangler queues create blastr-publish-jobs
    ```
-2. **Create KV namespaces** and put their IDs in `wrangler.toml` (see [Setup (D1, KV, Queues)](#setup-d1-kv-queues)).
-3. **Create D1 database**, run migrations, and add `database_id` to `wrangler.toml`.
+2. Leave the KV bindings in `wrangler.toml` without ids. Wrangler creates `PUBLISHED_NOTES` and `BLASTR_RATE_LIMIT` in the deploy account.
+3. **Create the D1 database** named `blastr-db`, run migrations, and let Wrangler record the database id for that account. Staging uses `blastr-db-staging` under `[env.staging]`. Do not copy another account's id into the file.
 
 Then run `pnpm deploy` or use the Git integration.
 
-**If deploy says "KV namespace '...' not found":** The IDs in `wrangler.toml` are from a different Cloudflare account than the one running the deploy. In the **same account** that is connected to your Git (the deploy account), create the KV namespaces and optionally D1/Queue, then put the **new** IDs from that account into `wrangler.toml`.
+**If deploy says "KV namespace '...' not found":** Deploy from the Cloudflare account that should own the resources. Do not copy ids from another account into `wrangler.toml`.
 
 **Wrangler 4 (multiple environments):** To deploy production from Git, set the deploy command to `npx wrangler deploy --env=""`. For staging: `npx wrangler deploy --env=staging`.
 
@@ -258,7 +258,7 @@ Then run `pnpm deploy` or use the Git integration.
 
 ```bash
 wrangler d1 create blastr-db
-# Add the database_id to wrangler.toml under [[d1_databases]]
+# Use the database_name already in wrangler.toml. Do not invent a database_id.
 
 wrangler d1 execute blastr-db --remote --file=./migrations/0002_blastr_tables.sql
 wrangler d1 execute blastr-db --remote --file=./migrations/0003_seed_system_relays.sql
@@ -278,15 +278,7 @@ Two KV namespaces are required:
 - **PUBLISHED_NOTES** — Event dedupe (published event IDs).
 - **BLASTR_RATE_LIMIT** — Rate-limit state (per-pubkey and admin).
 
-```bash
-wrangler kv:namespace create PUBLISHED_NOTES
-wrangler kv:namespace create PUBLISHED_NOTES --preview
-
-wrangler kv:namespace create BLASTR_RATE_LIMIT
-wrangler kv:namespace create BLASTR_RATE_LIMIT --preview
-```
-
-Add the IDs to `wrangler.toml` under `kv_namespaces`.
+The bindings are already in `wrangler.toml` without ids. Wrangler 4 creates `PUBLISHED_NOTES` and `BLASTR_RATE_LIMIT` on deploy. Do not add placeholder ids.
 
 ### Queue
 
