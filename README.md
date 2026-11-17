@@ -231,16 +231,18 @@ See [docs/API.md](docs/API.md) for request/response details.
 
 ## First-time setup (before first deploy)
 
-Checked-in `wrangler.toml` does not contain Cloudflare resource ids. Wrangler 4 provisions the `PUBLISHED_NOTES` and `BLASTR_RATE_LIMIT` KV namespaces on deploy. D1 is declared as `blastr-db` (staging: `blastr-db-staging`). The queue name is `blastr-publish-jobs` for both production and staging. Do not paste invented ids into the file.
+Checked-in `wrangler.toml` does not contain Cloudflare resource ids. Wrangler 4 provisions the `PUBLISHED_NOTES` and `BLASTR_RATE_LIMIT` KV namespaces on deploy. D1 is declared as `blastr-db` (staging: `blastr-db-staging`). Production consumes `blastr-publish-jobs`. Staging consumes `blastr-publish-jobs-staging`. Do not point both workers at one queue. Do not paste invented ids into the file.
 
 **Production deploy checklist:** (1) Create the queue in the same Cloudflare account you deploy from; (2) Create the D1 databases and run migrations; (3) Set `API_TOKEN` with `wrangler secret put API_TOKEN` (and `--env staging` for staging). Do not commit the token. (4) Run `pnpm deploy`. See [docs/OPERATIONS.md](docs/OPERATIONS.md) for runbooks.
 
 **Deploy will fail** if the queue does not exist. Do this once before deploying (or before connecting Git to Cloudflare):
 
-1. **Create the Queue** (required; deploy fails without it):
+1. **Create the queues** (required; deploy fails without the queue for that environment):
    ```bash
    wrangler queues create blastr-publish-jobs
+   wrangler queues create blastr-publish-jobs-staging
    ```
+   Production uses `blastr-publish-jobs`. Staging uses `blastr-publish-jobs-staging`. Do not deploy staging until the staging queue exists.
 2. Leave the KV bindings in `wrangler.toml` without ids. Wrangler creates `PUBLISHED_NOTES` and `BLASTR_RATE_LIMIT` in the deploy account.
 3. **Create the D1 database** named `blastr-db`, run migrations, and let Wrangler record the database id for that account. Staging uses `blastr-db-staging` under `[env.staging]`. Do not copy another account's id into the file.
 
@@ -284,9 +286,10 @@ The bindings are already in `wrangler.toml` without ids. Wrangler 4 creates `PUB
 
 ```bash
 wrangler queues create blastr-publish-jobs
+wrangler queues create blastr-publish-jobs-staging
 ```
 
-Configure producer and consumer in `wrangler.toml` (see existing `[[queues.producers]]` and `[[queues.consumers]]`).
+Production producer and consumer bindings use `blastr-publish-jobs`. The `[env.staging]` bindings use `blastr-publish-jobs-staging`. A staging worker must not consume the production queue.
 
 ---
 

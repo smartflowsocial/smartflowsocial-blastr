@@ -4,7 +4,7 @@
 
 Before the first deploy (or when setting up a new environment):
 
-1. **Cloudflare resources** — In the same account you deploy from: create the queue (`wrangler queues create blastr-publish-jobs`), create KV namespaces (PUBLISHED_NOTES, BLASTR_RATE_LIMIT) and optionally preview namespaces for local, create D1 and run migrations. Add all IDs to `wrangler.toml`.
+1. **Cloudflare resources** — In the same account you deploy from: create the production queue (`wrangler queues create blastr-publish-jobs`) and the staging queue (`wrangler queues create blastr-publish-jobs-staging`). Staging must not consume the production queue. Create KV namespaces (PUBLISHED_NOTES, BLASTR_RATE_LIMIT) and optionally preview namespaces for local, create D1 and run migrations. Do not paste another account's ids into `wrangler.toml`.
 2. **Secrets / env** — Set `API_TOKEN` to protect the admin API. If using CORS, set `CORS_ENABLED` and `CORS_ORIGINS`.
 3. **Deploy** — Run `pnpm deploy` (or `wrangler deploy --env=staging` for staging). Ensure CI is green before production deploys.
 4. **Verify** — Hit `GET /health` and `GET /ready`; confirm readiness checks pass. Add at least one entitlement via the admin API and test `POST /event` with a signed event.

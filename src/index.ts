@@ -232,14 +232,17 @@ const handler: ExportedHandler<Env, PublishJobMessage> = {
   /* eslint-enable sonarjs/cognitive-complexity */
 
   async queue(
-    batch: { messages: readonly { body: PublishJobMessage; ack(): void }[] },
+    batch: {
+      queue?: string;
+      messages: readonly { body: PublishJobMessage; ack(): void }[];
+    },
     env: Env,
     _ctx: ExecutionContext,
   ): Promise<void> {
     const logger = new ConsoleLogger();
     // First log so we can confirm the queue consumer is invoked at all (trigger: blastr-publish-jobs)
     logger.info("blastr queue consumer invoked", {
-      queue: "blastr-publish-jobs",
+      queue: batch.queue ?? "bound-queue",
       messageCount: batch.messages.length,
       jobIds: batch.messages.map((m) => m.body.jobId),
     });
