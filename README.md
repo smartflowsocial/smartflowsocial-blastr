@@ -328,7 +328,7 @@ Coverage thresholds are enforced in `vitest.config.ts`.
 
 ## CI/CD
 
-- **CI** (`.github/workflows/ci.yml`) — On push/PR: validate, unit tests, integration tests, coverage. Uses Node 26.13.1 and pnpm 10.27.0 with frozen lockfile.
+- **CI** (`.github/workflows/ci.yml`) — On push/PR: validate, unit tests, integration tests, coverage. Uses Node 26.13.1 and pnpm 12.21.0 with frozen lockfile.
 - **Deploy** — Set `CF_API_TOKEN` (and optionally routes in `wrangler.toml`), then `pnpm deploy` or your own workflow. Staging: `pnpm deploy --env staging`.
 
 ---
@@ -354,7 +354,7 @@ Coverage thresholds are enforced in `vitest.config.ts`.
 
 | Issue                                             | What to check                                                                                                                                                                                      |
 | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Clone / install fails**                         | Node.js ≥20 and pnpm 10.x. Run `pnpm install` in the project root.                                                                                                                                 |
+| **Clone / install fails**                         | Node.js 26.13.1 or newer and pnpm 12.21.0. Run `pnpm install` in the project root.                                                                                                                 |
 | **`pnpm start` fails or bindings missing**        | Ensure `wrangler.toml` has D1, KV, and Queue bindings; for local dev use `--local` in D1 execute and add preview IDs for KV. See [Setup (D1, KV, Queues)](#setup-d1-kv-queues).                    |
 | **GET /ready returns 503**                        | D1, KV, or queue binding unreachable. Check names and IDs in `wrangler.toml`, run migrations for D1, confirm queue exists. See [docs/OPERATIONS.md](docs/OPERATIONS.md#health--readiness-failing). |
 | **POST /event rejected: "subscription required"** | The event’s `pubkey` must exist in `blastr_entitlements` with `status` `active` or `grace`. Add an entitlement via the admin API or seed the table.                                                |
