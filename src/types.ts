@@ -45,11 +45,7 @@ export interface SerializedNostrEvent {
 }
 
 export type PublishJobStatus =
-  | "queued"
-  | "processing"
-  | "partial"
-  | "success"
-  | "failed";
+  "queued" | "processing" | "partial" | "success" | "failed";
 
 export type PublishJobSource = "sfs-app" | "external-client" | "api";
 

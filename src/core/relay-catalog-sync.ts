@@ -29,10 +29,7 @@ export type CatalogSyncResult =
   | {
       applied: false;
       reason:
-        | "missing_base_url"
-        | "fetch_failed"
-        | "parse_failed"
-        | "empty_catalog";
+        "missing_base_url" | "fetch_failed" | "parse_failed" | "empty_catalog";
     }
   | { applied: true; inserted: number; updated: number };
 

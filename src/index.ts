@@ -202,7 +202,7 @@ const handler: ExportedHandler<Env, PublishJobMessage> = {
               const body = await res.clone().json();
               const relayUrl =
                 body && typeof body === "object" && "relay_url" in body
-                  ? String((body as { relay_url: unknown }).relay_url)
+                  ? String(body.relay_url)
                   : undefined;
               auditLog(request, "policy_relay.add", {
                 pubkey,
