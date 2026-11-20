@@ -4,7 +4,7 @@ Thank you for your interest in contributing. This document explains how to run c
 
 ## Before you start
 
-- **Node.js** 26.13.1 or newer (`.nvmrc`) and **pnpm** 10.x are required.
+- **Node.js** 26.13.1 or newer (`.nvmrc`) and **pnpm** 12.21.0 are required.
 - Install dependencies: `pnpm install`.
 - Run the full validation and test suite locally before opening a pull request.
 
@@ -23,6 +23,7 @@ This runs:
 - `pnpm format:check` — Prettier
 - `pnpm lint` — ESLint (with cache)
 - `pnpm typecheck` — TypeScript `tsc --noEmit`
+- `pnpm provenance` — checks that known copied Mutiny Wallet blobs and phrases are absent. A pass does not prove copyright independence. See [docs/SOURCE_PROVENANCE.md](docs/SOURCE_PROVENANCE.md).
 
 Fix issues with:
 

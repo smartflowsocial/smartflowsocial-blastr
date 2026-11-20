@@ -35,7 +35,7 @@ jobs:
           cat install.log
           exit $code
 
-      - name: Validate formatting, lint and typecheck
+      - name: Validate formatting, lint, types, and copied-source markers
         run: |
           set +e
           pnpm validate > validate.log 2>&1

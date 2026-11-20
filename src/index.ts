@@ -3,6 +3,7 @@ import type {
   ExportedHandler,
 } from "@cloudflare/workers-types";
 
+import { faviconResponse } from "./brand/icon";
 import { validateEnvironment } from "./config/env";
 import { syncSystemRelayCatalog } from "./core/relay-catalog-sync";
 import { checkReadiness } from "./health";
@@ -71,6 +72,11 @@ const handler: ExportedHandler<Env, PublishJobMessage> = {
     }
 
     const url = new URL(request.url);
+    if (request.method === "GET") {
+      const icon = faviconResponse(url.pathname);
+      if (icon) return icon;
+    }
+
     if (url.pathname === "/health" && request.method === "GET") {
       return new Response(
         JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),

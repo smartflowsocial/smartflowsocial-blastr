@@ -3,6 +3,7 @@
 | Document                                                       | Description                                                                                           |
 | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | [ARCHITECTURE.md](ARCHITECTURE.md)                             | High-level architecture, components, data flow, and data model.                                       |
+| [SOURCE_PROVENANCE.md](SOURCE_PROVENANCE.md)                   | Relationship to Mutiny Wallet Blastr, removed copies, and the license boundary.                       |
 | [API.md](API.md)                                               | HTTP and WebSocket API reference (public and admin endpoints).                                        |
 | [SFS_BROADCAST_RELAY_DESIGN.md](SFS_BROADCAST_RELAY_DESIGN.md) | Product and design assessment, relay resolution, and phasing for the SmartFlowSocial broadcast relay. |
 | [VERSIONING.md](VERSIONING.md)                                 | API versioning policy and future breaking changes.                                                    |

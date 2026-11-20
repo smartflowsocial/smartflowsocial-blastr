@@ -14,6 +14,45 @@ Blastr is a **write-only** managed Nostr relay that:
 
 Behavior is entirely determined by the **event author’s pubkey**, not by client or session.
 
+```mermaid
+flowchart TD
+  clients["External Nostr clients"]
+  http["HTTP POST /event"]
+  ws["WebSocket ingress on / and /ws"]
+  validate["Signature and event validation"]
+  entitle["Pubkey entitlement check"]
+  rate["Per-pubkey rate limit"]
+  dedupe["KV deduplication"]
+  resolve["Relay catalog and policy resolution"]
+  catalog[("D1 catalog, entitlements, and policies")]
+  sync["Optional NostrMash catalog sync"]
+  job["D1 publish job"]
+  queue["Cloudflare Queue"]
+  consumer["Queue consumer"]
+  fanout["Relay fanout"]
+  attempts[("Delivery attempt records")]
+  relays["Curated downstream relays"]
+
+  clients --> http
+  clients --> ws
+  http --> validate
+  ws --> validate
+  validate --> entitle
+  entitle --> rate
+  rate --> dedupe
+  dedupe --> resolve
+  catalog --> resolve
+  sync --> catalog
+  resolve --> job
+  job --> queue
+  queue --> consumer
+  consumer --> fanout
+  fanout --> relays
+  fanout --> attempts
+```
+
+The diagram is the current SmartFlowSocial path. Ingress returns after the job is queued. The consumer performs fanout and writes one attempt row per relay outcome. The catalog sync is scheduled and is not on the request path.
+
 ---
 
 ## Components
