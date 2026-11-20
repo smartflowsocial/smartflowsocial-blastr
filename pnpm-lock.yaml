@@ -200,9 +200,6 @@ importers:
 
   .:
     dependencies:
-      hono:
-        specifier: ^4.13.19
-        version: 4.13.19
       nostr-tools:
         specifier: ^2.26.1
         version: 2.26.1(@typescript/typescript6@6.0.2)(nostr-wasm@0.1.0)
@@ -1627,10 +1624,6 @@ packages:
   hasown@2.0.4:
     resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==}
     engines: {node: '>= 0.4'}
-
-  hono@4.13.19:
-    resolution: {integrity: sha512-KmXvQAXwcAHV+muzbIwoJ23niEB5nMoDVr9WcRkU8mvjUECm/1+7v4Jgp7P7a+H6MLFrh+vXrGonGrGS+RQfkA==}
-    engines: {node: '>=16.9.0'}
 
   husky@9.1.7:
     resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
@@ -3733,8 +3726,6 @@ snapshots:
   hasown@2.0.4:
     dependencies:
       function-bind: 1.1.2
-
-  hono@4.13.19: {}
 
   husky@9.1.7: {}
 

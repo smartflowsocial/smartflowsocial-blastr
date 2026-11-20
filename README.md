@@ -237,11 +237,12 @@ wrangler d1 execute blastr-db --remote --file=./migrations/0003_seed_system_rela
 wrangler d1 execute blastr-db --remote --file=./migrations/0004_blastr_publish_jobs_event_id_unique.sql
 wrangler d1 execute blastr-db --remote --file=./migrations/0005_seed_top50_system_relays.sql
 wrangler d1 execute blastr-db --remote --file=./migrations/0006_system_relay_operator_hold.sql
+wrangler d1 execute blastr-db --remote --file=./migrations/0007_replace_copied_cold_start.sql
 ```
 
 For local dev, use `--local` instead of `--remote`.
 
-Apply `0002` through `0006` only. This tree has no earlier migration. Do not recreate a generic `event` / `tag` schema; the worker does not read those tables. If an older database already has them, leave them. Nothing in this repository drops production tables.
+Apply `0002` through `0007` only. This tree has no earlier migration. Do not recreate a generic `event` / `tag` schema; the worker does not read those tables. If an older database already has them, leave them. Nothing in this repository drops production tables. `0007` deletes two relay rows, `wss://nostr.zebedee.cloud` and `wss://brb.io`, from a database that already applied an older `0003`. It does not run itself; an operator runs the command above.
 
 ### KV
 

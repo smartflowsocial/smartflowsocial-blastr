@@ -37,7 +37,7 @@ No other file in the two trees shared a blob hash.
 
 ### Why the SQL files were safe to delete
 
-`wrangler.toml` does not set `migrations_dir`. Nothing in `src/` or the tests reads an `event` or `tag` table. The README already told operators not to apply those two files. Documented setup runs `0002` through `0006` by hand. Deleting the files does not send SQL to Cloudflare and does not drop tables that may already exist in a database. If an older database has `event` or `tag`, leave those tables. Do not reintroduce these two files.
+`wrangler.toml` does not set `migrations_dir`. Nothing in `src/` or the tests reads an `event` or `tag` table. The README already told operators not to apply those two files. Documented setup runs `0002` through `0007` by hand. Deleting the files does not send SQL to Cloudflare and does not drop tables that may already exist in a database. If an older database has `event` or `tag`, leave those tables. Do not reintroduce these two files.
 
 ### What replaced the image and the icon
 
@@ -71,20 +71,22 @@ The worker is not a line-by-line translation of the Rust.
 
 One short rejection string is the same: `disallowed event kind`. It is the NIP-20 reason for a kind this service does not accept. The kind rule itself is the allowlist above, not the upstream denylist. The string was left so clients that already match it keep working.
 
-## Retained ordered relay list
+## Cold start
 
-`migrations/0003_seed_system_relays.sql` inserts these public URLs, in this order:
+`migrations/0003_seed_system_relays.sql` used to insert eight public URLs in the same order as the upstream `RELAYS` fallback array. That ordered list is no longer the cold start. The current `0003` inserts the first eight rows of this repository's own catalog seed, `migrations/0005_seed_top50_system_relays.sql`:
 
-1. `wss://nostr.zebedee.cloud`
-2. `wss://relay.snort.social`
-3. `wss://eden.nostr.land`
-4. `wss://nos.lol`
-5. `wss://brb.io`
-6. `wss://nostr.fmt.wiz.biz`
-7. `wss://relay.damus.io`
-8. `wss://nostr.wine`
+1. `wss://relay.mostr.pub`
+2. `wss://relay.damus.io`
+3. `wss://relay.shitforce.one`
+4. `wss://relay.primal.net`
+5. `wss://relay.momostr.pink`
+6. `wss://nos.lol`
+7. `wss://relay.nostr.band`
+8. `wss://purplepag.es`
 
-That order is the upstream `RELAYS` fallback array. The `INSERT` statement and the `blastr_system_relays` columns are from this project. The file was not rewritten. It is an already-published setup step. Changing the rows would make a fresh setup differ from databases that already applied it, and re-running `INSERT OR IGNORE` would not remove rows. A comment in the file points at this note. Replacing the cold-start set needs a new migration and the owner's approval. `0005_seed_top50_system_relays.sql` is a separate catalog seed and was not the upstream eight-URL constant.
+`0005` still inserts the broader catalog. Some of those addresses also appeared in the old eight-URL list. They stay because this catalog selected them on its own.
+
+`migrations/0007_replace_copied_cold_start.sql` deletes only `wss://nostr.zebedee.cloud` and `wss://brb.io`. Those two were in the old cold start and are not in `0005`. Re-running the old `INSERT OR IGNORE` would not have removed them. This repository does not execute `0007` against a live database. An operator applies it with the command in the README.
 
 `wss://nostr.mutinywallet.com` appears in `0005` as one public relay in that catalog. It is a relay address, not a copy of the upstream worker.
 
@@ -101,9 +103,8 @@ Direct dependencies checked for this record:
 | Package       | Version | Use                                       | License                                  |
 | ------------- | ------- | ----------------------------------------- | ---------------------------------------- |
 | `nostr-tools` | 2.26.1  | Signature verification and event handling | Unlicense, that project's own dedication |
-| `hono`        | 4.13.19 | Declared in `package.json`                | MIT                                      |
 
-`src/` does not import `hono`. Removing it would be a dependency change outside this cleanup. Transitive licenses were not copied into this file. They stay with those packages.
+`hono` was declared and not imported. It has been removed from `package.json` and `pnpm-lock.yaml`. Transitive licenses were not copied into this file. They stay with the installed packages.
 
 ## Marker check
 
@@ -113,8 +114,6 @@ A pass means those markers are absent. It does not mean every possible adaptatio
 
 ## Unresolved questions
 
-- Whether the owner or counsel wants the historical blobs removed from public Git history. That would be a history rewrite and a force-push of `main`. It was not done.
+- The owner asked to remove the historical blobs from public Git history. That needs a non-fast-forward update of `main`. The `Protect main` ruleset rejects those updates, and this work did not force-push `main`. The blobs remain reachable from the published history. The MIT notice stays for that reason.
 - Whether the shared name Blastr should change. It was not changed.
-- Whether the eight-URL cold-start list in `0003` should be replaced by a new migration. It was not replaced.
-- Whether production D1 already contains `event` and `tag` tables. This work did not query production. Deleting the unused files does not drop them.
-- `hono` is unused by `src/`. It was left in `package.json`.
+- Whether production D1 already contains `event` and `tag` tables. This work did not query production. Deleting the unused files does not drop them. `0007` was not executed.

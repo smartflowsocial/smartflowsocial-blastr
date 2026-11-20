@@ -19,9 +19,9 @@ Commit `8fcb1ec` of this repository added four files that were byte-identical to
 - `migrations/0000_events.sql`
 - `migrations/0001_tag.sql`
 
-Those files are not in the current tree. They remain in Git history because history was not rewritten. A clone of this repository still downloads those historical blobs. The MIT license that covered them is reproduced here so the required notice stays with this repository.
+Those files are not in the current tree. They remain in Git history. Public history was not rewritten: `main` rejects a non-fast-forward update, and this work did not force-push it. A clone of this repository still downloads those historical blobs. The MIT license that covered them is reproduced here so the required notice stays with this repository.
 
-`migrations/0003_seed_system_relays.sql` still inserts eight public relay URLs in the same order as that project's fallback list. The executable SQL was not changed. See `docs/SOURCE_PROVENANCE.md`.
+The ordered eight-URL fallback list is no longer the cold start in `migrations/0003_seed_system_relays.sql`. Commits published before that replacement still contain the old file. See `docs/SOURCE_PROVENANCE.md`.
 
 ```
 MIT License
@@ -49,9 +49,8 @@ SOFTWARE.
 
 ## Direct dependencies
 
-| Package     | Version in this repo | Role                                                 | License                                   |
-| ----------- | -------------------- | ---------------------------------------------------- | ----------------------------------------- |
-| nostr-tools | 2.26.1               | Nostr event verification                             | Unlicense (that project's own dedication) |
-| hono        | 4.13.19              | Declared in package.json. `src/` does not import it. | MIT                                       |
+| Package     | Version in this repo | Role                     | License                                   |
+| ----------- | -------------------- | ------------------------ | ----------------------------------------- |
+| nostr-tools | 2.26.1               | Nostr event verification | Unlicense (that project's own dedication) |
 
-Hono's MIT license is the license in that package. Transitive dependency licenses are not reproduced here. They remain in the packages installed from `pnpm-lock.yaml`.
+`hono` is not a dependency. Transitive dependency licenses are not reproduced here. They remain in the packages installed from `pnpm-lock.yaml`.

@@ -48,7 +48,6 @@
     ]
   },
   "dependencies": {
-    "hono": "^4.13.19",
     "nostr-tools": "^2.26.1"
   },
   "devDependencies": {

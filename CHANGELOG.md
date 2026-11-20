@@ -8,7 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Added** — Ingress accepts NIP-88 poll and vote kinds **1068** and **1018** (draft NIP), so SmartFlowSocial and other clients can publish polls/votes through Blastr like other allowed kinds.
 - **Fixed** — Documented ingress rate-limit default is 60 requests per window, matching `DEFAULT_REQUESTS_PER_WINDOW`.
-- **Changed** — Fresh D1 setup applies migrations `0002` through `0006`. `0000` and `0001` are not part of this schema.
+- **Changed** — Fresh D1 setup applies migrations `0002` through `0007`. `0000` and `0001` are not part of this schema.
+- **Changed** — The `0003` cold start is the first eight relays from this repository's own `0005` catalog. `0007` deletes `wss://nostr.zebedee.cloud` and `wss://brb.io` from a database that already applied the previous cold-start file. This change does not execute that SQL.
+- **Removed** — Unused `hono` dependency. The worker does not import it.
 - **Removed** — Deleted the copied architecture image, the copied favicon, and the unused `event` / `tag` migrations `0000` and `0001`. Existing D1 databases are not altered by this source change.
 - **Added** — Original icon at `GET /favicon.ico` and `GET /favicon.svg`.
 - **Docs** — Recorded source provenance and third-party notices. The Unlicense applies to SmartFlowSocial-authored code in the current tree. It does not relicense historical commits or dependencies.
