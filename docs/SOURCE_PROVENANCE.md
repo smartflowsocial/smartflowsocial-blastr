@@ -49,7 +49,7 @@ No other file in the two trees shared a blob hash.
 
 `.github/workflows/test.yml` was not byte-identical to the upstream workflow. It kept the upstream job ids (`website` / "Build WASM binary" and `rust_tests` / "Rust Checks") and, when `Cargo.toml` was absent, exited successfully. This repository has no Rust crate, so the workflow never tested the worker. It has been removed. The TypeScript checks live in `.github/workflows/ci.yml`.
 
-The publish workflows are not copies. They are manual `workflow_dispatch` jobs with a credential preflight. They were left as they are so deploy behavior does not change. The `wrangler publish` invocation is the ordinary Wrangler command.
+The publish workflows are manual `workflow_dispatch` jobs with a credential preflight. Production runs `pnpm exec wrangler deploy`. Staging runs `pnpm exec wrangler deploy --env staging` and keeps the staging queue. Neither workflow deploys on push. They use the Wrangler version pinned in this repository.
 
 ## TypeScript implementation
 
