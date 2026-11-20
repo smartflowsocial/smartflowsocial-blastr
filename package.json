@@ -1,6 +1,6 @@
 {
   "name": "blastr",
-  "version": "1.0.0",
+  "version": "1.0.0-rc.1",
   "private": true,
   "description": "Broadcast relay for SmartFlowSocial. Gates signed Nostr events by pubkey entitlement and fans them out to a curated relay set.",
   "author": "SmartFlowSocial",
