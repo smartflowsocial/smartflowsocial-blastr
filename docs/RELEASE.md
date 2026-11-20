@@ -1,6 +1,10 @@
 # Release process
 
-Releases follow [semver](https://semver.org/). Tags are `v1.0.0`, `v1.1.0`, etc.
+Releases follow [semver](https://semver.org/). The current prerelease tag is `v1.0.0-rc.1`. Stable tags stay `v1.0.0`, `v1.1.0`, and so on. `v1.0.0-rc.1` is not stable `v1.0.0`.
+
+Pushing a tag does not deploy the worker. Production deploy is the manual **Publish** workflow and requires `deploy-production`. Staging deploy is the manual **Publish Staging** workflow, uses `--env staging`, and requires `deploy-staging`. Staging uses `blastr-publish-jobs-staging` and `blastr-db-staging`. It does not use the production queue.
+
+The changelog section `1.0.0 — 2025-03-12` is a historical baseline. It is not GitHub Release `v1.0.0`.
 
 ## Distribution and snapshots
 
@@ -20,8 +24,8 @@ git archive --format=tar.gz --prefix=blastr/ HEAD -o blastr-snapshot.tar.gz
 1. **Bump version** in `package.json` (e.g. `1.0.0` → `1.1.0`).
 2. **Update CHANGELOG.md:** Replace the **Unreleased** heading with the new version and date (e.g. `## 1.1.0 — 2025-03-15`). Add an empty **Unreleased** section again for future entries.
 3. **Commit:** e.g. `Release v1.1.0`.
-4. **Tag:** `git tag v1.1.0` (and push the tag: `git push origin v1.1.0`).
-5. **Deploy:** Run your deployment (e.g. `pnpm deploy` or your CI/CD pipeline). Optionally use a **manual workflow** (`workflow_dispatch`) that runs CI, then deploys when triggered with a version input.
+4. **Tag:** `git tag -a v1.1.0 -m "v1.1.0"` and `git push origin v1.1.0`. Do not force-update an existing tag.
+5. **Deploy:** Do this only as a separate manual action. Pushing the tag does not deploy. Use **Publish** with `deploy-production` or **Publish Staging** with `deploy-staging`. Do not run either one for the `v1.0.0-rc.1` source release.
 
 ## Optional: GitHub Actions release workflow
 
