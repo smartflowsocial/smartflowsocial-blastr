@@ -27,7 +27,8 @@
     "lint:ci": "eslint . --format json --output-file eslint-report.json || exit 1",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "validate": "pnpm format:check && pnpm lint && pnpm typecheck",
+    "provenance": "node scripts/check-source-provenance.mjs",
+    "validate": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm provenance",
     "precheck": "pnpm lint && pnpm typecheck",
     "test": "vitest run",
     "test:unit": "vitest run tests/core tests/services tests/utils tests/logger.test.ts",
@@ -47,7 +48,6 @@
     ]
   },
   "dependencies": {
-    "hono": "^4.13.19",
     "nostr-tools": "^2.26.1"
   },
   "devDependencies": {

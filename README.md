@@ -50,45 +50,13 @@ Part of [SmartFlowSocial](https://smartflow.social). Related pieces: [app](https
 
 ## Architecture
 
-![Blastr architecture](docs/images/blastr-diagram.png)
+External Nostr clients submit events over HTTP `POST /event` or a WebSocket on `/` or `/ws`. The worker validates the signature and event shape, checks the author's pubkey entitlement, applies the rate limit, and rejects duplicates held in KV. It resolves that pubkey's relay policy against the D1 relay catalog, stores a publish job, and enqueues it. A queue consumer fans the job out to the snapshotted relay list and records each delivery attempt. A scheduled task can refresh the catalog from NostrMash. That sync is not on the publish path.
 
-```
-                    ┌─────────────────────────────────────────────────────────┐
-                    │                     Blastr Worker                        │
-                    │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
-  Nostr clients     │  │  WebSocket  │  │ POST/event  │  │ GET /, /health  │  │
-  (SFS, Damus…) ───►│  │   relay     │  │   handler   │  │ NIP-11, health  │  │
-                    │  └──────┬──────┘  └──────┬──────┘  └─────────────────┘  │
-                    │         │                │                               │
-                    │         └────────┬───────┘                               │
-                    │                  ▼                                       │
-                    │  ┌───────────────────────────────────────────────────┐   │
-                    │  │  Ingress pipeline                                 │   │
-                    │  │  validate → entitlement → rate limit → dedupe →   │   │
-                    │  │  resolve relays → create job → enqueue → OK       │   │
-                    │  └─────────────────────────────┬─────────────────────┘   │
-                    │                                │                          │
-                    │                                ▼                          │
-                    │  ┌───────────────────────────────────────────────────┐   │
-                    │  │  Cloudflare Queues (blastr-publish-jobs)           │   │
-                    │  └─────────────────────────────┬─────────────────────┘   │
-                    └───────────────────────────────┼─────────────────────────┘
-                                                    │
-                                                    ▼
-                    ┌─────────────────────────────────────────────────────────┐
-                    │  Queue consumer: load job → fanout to job’s relay list   │
-                    │  → record attempts in D1 (blastr_publish_attempts)       │
-                    └─────────────────────────────┬────────────────────────────┘
-                                                    │
-                                                    ▼
-                    ┌─────────────────────────────────────────────────────────┐
-                    │  Downstream Nostr relays (system relay universe)         │
-                    └─────────────────────────────────────────────────────────┘
-```
+The diagram is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Product rationale is in [docs/SFS_BROADCAST_RELAY_DESIGN.md](docs/SFS_BROADCAST_RELAY_DESIGN.md).
 
-**Data stores:** D1 (entitlements, policies, system relays, jobs, attempts), KV (dedupe by event id, optional rate-limit counters).
+**Data stores:** D1 (entitlements, policies, system relays, jobs, attempts), KV (dedupe by event id, rate-limit counters).
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/SFS_BROADCAST_RELAY_DESIGN.md](docs/SFS_BROADCAST_RELAY_DESIGN.md) for detailed design.
+This repository is the SmartFlowSocial service. It is not Mutiny Wallet's Blastr, and Mutiny Wallet does not maintain, endorse, or sponsor it. The shared name is historical. See [docs/SOURCE_PROVENANCE.md](docs/SOURCE_PROVENANCE.md).
 
 ---
 
@@ -110,7 +78,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/SFS_BROADCAST_RELAY_D
 
 ## Quick start
 
-**Prerequisites:** Node.js ≥20, [pnpm](https://pnpm.io/) 10.x.
+**Prerequisites:** Node.js 26.13.1 or newer (`.nvmrc`) and [pnpm](https://pnpm.io/) 12.21.0.
 
 ```bash
 # Clone the repo (use your fork or the canonical URL)
@@ -118,7 +86,7 @@ git clone https://github.com/smartflowsocial/smartflowsocial-blastr.git
 cd smartflowsocial-blastr
 pnpm install
 
-# Validate (format, lint, typecheck)
+# Validate (format, lint, typecheck, provenance markers)
 pnpm validate
 
 # Run tests
@@ -180,17 +148,19 @@ Success response: `["OK", "<event_id>", true, ""]`. See [docs/API.md](docs/API.m
 
 ### Public endpoints
 
-| Method              | Path         | Description                                                                                                          |
-| ------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `GET`               | `/`          | NIP-11 relay info when `Accept: application/nostr+json`; otherwise plain text.                                       |
-| `GET`               | `/health`    | Liveness probe. Returns `{ "status": "ok", "timestamp": "…" }`.                                                      |
-| `GET`               | `/ready`     | Readiness probe. Checks D1, KV, queue bindings; returns 503 if any fail.                                             |
-| `POST`              | `/event`     | Submit a Nostr event. Body: event object or `["EVENT", event]`. Returns Nostr `["OK", event_id, accepted, message]`. |
-| `GET` / `WebSocket` | `/` or `/ws` | Nostr WebSocket relay (event submission).                                                                            |
+| Method              | Path           | Description                                                                                                          |
+| ------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `GET`               | `/`            | NIP-11 relay info when `Accept: application/nostr+json`; otherwise plain text.                                       |
+| `GET`               | `/favicon.ico` | Original SmartFlowSocial icon.                                                                                       |
+| `GET`               | `/favicon.svg` | Same icon as SVG.                                                                                                    |
+| `GET`               | `/health`      | Liveness probe. Returns `{ "status": "ok", "timestamp": "…" }`.                                                      |
+| `GET`               | `/ready`       | Readiness probe. Checks D1, KV, queue bindings; returns 503 if any fail.                                             |
+| `POST`              | `/event`       | Submit a Nostr event. Body: event object or `["EVENT", event]`. Returns Nostr `["OK", event_id, accepted, message]`. |
+| `GET` / `WebSocket` | `/` or `/ws`   | Nostr WebSocket relay (event submission).                                                                            |
 
-The relay (WebSocket and POST /event) is gated by **pubkey entitlement** only; no API token is required for publishing. `API_TOKEN` protects the admin API when set.
+The relay (WebSocket and POST /event) is gated by **pubkey entitlement** only; no API token is required for publishing. Admin routes require `API_TOKEN` and return 401 when it is unset.
 
-### Admin API (requires `API_TOKEN` when set)
+### Admin API (`API_TOKEN` required)
 
 | Method   | Path                                         | Description                                                                                |
 | -------- | -------------------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -267,11 +237,12 @@ wrangler d1 execute blastr-db --remote --file=./migrations/0003_seed_system_rela
 wrangler d1 execute blastr-db --remote --file=./migrations/0004_blastr_publish_jobs_event_id_unique.sql
 wrangler d1 execute blastr-db --remote --file=./migrations/0005_seed_top50_system_relays.sql
 wrangler d1 execute blastr-db --remote --file=./migrations/0006_system_relay_operator_hold.sql
+wrangler d1 execute blastr-db --remote --file=./migrations/0007_replace_copied_cold_start.sql
 ```
 
 For local dev, use `--local` instead of `--remote`.
 
-`migrations/0000_events.sql` and `migrations/0001_tag.sql` create a generic `event` / `tag` schema this worker does not read. Do not apply them.
+Apply `0002` through `0007` only. This tree has no earlier migration. Do not recreate a generic `event` / `tag` schema; the worker does not read those tables. If an older database already has them, leave them. Nothing in this repository drops production tables. `0007` deletes two relay rows, `wss://nostr.zebedee.cloud` and `wss://brb.io`, from a database that already applied an older `0003`. It does not run itself; an operator runs the command above.
 
 ### KV
 
@@ -295,16 +266,16 @@ Production producer and consumer bindings use `blastr-publish-jobs`. The `[env.s
 
 ## Development
 
-| Command             | Description                               |
-| ------------------- | ----------------------------------------- |
-| `pnpm start`        | Start local dev server (`wrangler dev`).  |
-| `pnpm validate`     | Format check + lint + typecheck.          |
-| `pnpm typecheck`    | `tsc --noEmit`.                           |
-| `pnpm lint`         | ESLint with cache.                        |
-| `pnpm lint:fix`     | ESLint with auto-fix.                     |
-| `pnpm format`       | Prettier write.                           |
-| `pnpm format:check` | Prettier check.                           |
-| `pnpm deploy`       | Deploy to Cloudflare (`wrangler deploy`). |
+| Command             | Description                                                            |
+| ------------------- | ---------------------------------------------------------------------- |
+| `pnpm start`        | Start local dev server (`wrangler dev`).                               |
+| `pnpm validate`     | Format check, lint, typecheck, and the source-provenance marker check. |
+| `pnpm typecheck`    | `tsc --noEmit`.                                                        |
+| `pnpm lint`         | ESLint with cache.                                                     |
+| `pnpm lint:fix`     | ESLint with auto-fix.                                                  |
+| `pnpm format`       | Prettier write.                                                        |
+| `pnpm format:check` | Prettier check.                                                        |
+| `pnpm deploy`       | Deploy to Cloudflare (`wrangler deploy`).                              |
 
 Staging: `wrangler deploy --env staging` (uses `env.staging` in `wrangler.toml`).
 
@@ -335,18 +306,20 @@ Coverage thresholds are enforced in `vitest.config.ts`.
 
 ## Documentation
 
-| Document                                                                 | Description                                                           |
-| ------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                             | High-level architecture, components, data flow, and data model.       |
-| [docs/API.md](docs/API.md)                                               | HTTP and WebSocket API reference (public and admin endpoints).        |
-| [docs/SFS_BROADCAST_RELAY_DESIGN.md](docs/SFS_BROADCAST_RELAY_DESIGN.md) | Product and design assessment, relay resolution, phasing.             |
-| [docs/VERSIONING.md](docs/VERSIONING.md)                                 | API versioning policy and future breaking changes.                    |
-| [docs/OPERATIONS.md](docs/OPERATIONS.md)                                 | SLOs, runbooks, health/readiness, fanout and poison-message handling. |
-| [docs/RELEASE.md](docs/RELEASE.md)                                       | Release process, version bump, changelog, and tagging.                |
-| [docs/openapi.yaml](docs/openapi.yaml)                                   | OpenAPI 3 spec for the HTTP API (validated in CI).                    |
-| [CONTRIBUTING.md](CONTRIBUTING.md)                                       | How to run checks, write tests, and submit changes.                   |
-| [SECURITY.md](SECURITY.md)                                               | Reporting vulnerabilities and scope.                                  |
-| [CHANGELOG.md](CHANGELOG.md)                                             | User-facing and breaking changes per release.                         |
+| Document                                                                 | Description                                                                       |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                             | High-level architecture, components, data flow, and data model.                   |
+| [docs/SOURCE_PROVENANCE.md](docs/SOURCE_PROVENANCE.md)                   | Relationship to Mutiny Wallet Blastr, copied files removed, and license boundary. |
+| [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)                         | Dependency licenses and the MIT notice for historical copied files.               |
+| [docs/API.md](docs/API.md)                                               | HTTP and WebSocket API reference (public and admin endpoints).                    |
+| [docs/SFS_BROADCAST_RELAY_DESIGN.md](docs/SFS_BROADCAST_RELAY_DESIGN.md) | Product and design assessment, relay resolution, phasing.                         |
+| [docs/VERSIONING.md](docs/VERSIONING.md)                                 | API versioning policy and future breaking changes.                                |
+| [docs/OPERATIONS.md](docs/OPERATIONS.md)                                 | SLOs, runbooks, health/readiness, fanout and poison-message handling.             |
+| [docs/RELEASE.md](docs/RELEASE.md)                                       | Release process, version bump, changelog, and tagging.                            |
+| [docs/openapi.yaml](docs/openapi.yaml)                                   | OpenAPI 3 spec for the HTTP API (validated in CI).                                |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                                       | How to run checks, write tests, and submit changes.                               |
+| [SECURITY.md](SECURITY.md)                                               | Reporting vulnerabilities and scope.                                              |
+| [CHANGELOG.md](CHANGELOG.md)                                             | User-facing and breaking changes per release.                                     |
 
 ---
 
@@ -373,4 +346,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to run checks, write tests, and s
 
 ## License
 
-Released into the public domain under the [Unlicense](LICENSE). This project follows the [Code of Conduct](CODE_OF_CONDUCT.md). Report security issues through [SECURITY.md](SECURITY.md).
+SmartFlowSocial-authored source in the current tree is released under the [Unlicense](LICENSE). That dedication does not cover third-party dependencies, and it does not relicense older Git commits. Historical commits of this repository included files that were identical to Mutiny Wallet Blastr, which is MIT-licensed. Those files are not in the current tree. The MIT notice for them is in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The comparison and the remaining questions are in [docs/SOURCE_PROVENANCE.md](docs/SOURCE_PROVENANCE.md).
+
+This project follows the [Code of Conduct](CODE_OF_CONDUCT.md). Report security issues through [SECURITY.md](SECURITY.md).

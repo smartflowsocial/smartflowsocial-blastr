@@ -5,7 +5,7 @@ SFS broadcast relay API. This document describes the HTTP and WebSocket API of t
 ## Authentication
 
 - **Relay** (POST /event and WebSocket): Does **not** use `API_TOKEN`. Access is gated by **pubkey entitlement** only (see ingress pipeline). No API token is required for publishing.
-- **Admin** routes (`/admin/*`): When `API_TOKEN` is set, require `Authorization: Bearer <API_TOKEN>` or `X-API-TOKEN: <API_TOKEN>`. If `API_TOKEN` is not set, admin routes are unprotected.
+- **Admin** routes (`/admin/*`): Require `Authorization: Bearer <API_TOKEN>` or `X-API-TOKEN: <API_TOKEN>`. If `API_TOKEN` is unset, admin routes fail closed and return 401. Publishing does not use this token.
 
 ---
 
@@ -23,6 +23,12 @@ SFS broadcast relay API. This document describes the HTTP and WebSocket API of t
 - Otherwise returns plain text: `Blastr relay. Use Nostr client with wss://... or POST /event`
 
 **Response:** `200 OK`, `Content-Type: application/nostr+json` or `text/plain`.
+
+---
+
+### GET /favicon.ico and GET /favicon.svg
+
+**Site icon.** Original SmartFlowSocial artwork. `/favicon.ico` is `image/x-icon`. `/favicon.svg` is `image/svg+xml`. These routes do not publish events and do not read D1.
 
 ---
 

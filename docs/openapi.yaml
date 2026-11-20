@@ -31,6 +31,31 @@ paths:
                 type: string
                 example: "Blastr relay. Use Nostr client with wss://... or POST /event"
 
+  /favicon.ico:
+    get:
+      summary: Site icon
+      operationId: getFaviconIco
+      responses:
+        "200":
+          description: Original SmartFlowSocial Blastr icon
+          content:
+            image/x-icon:
+              schema:
+                type: string
+                format: binary
+
+  /favicon.svg:
+    get:
+      summary: Site icon as SVG
+      operationId: getFaviconSvg
+      responses:
+        "200":
+          description: Original SmartFlowSocial Blastr icon
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+
   /health:
     get:
       summary: Liveness probe
@@ -496,4 +521,4 @@ components:
           type: string
 
 security: []
-# ApiToken / XApiToken apply to admin routes only when API_TOKEN is set. Relay (POST /event, WebSocket) does not use API token.
+# ApiToken / XApiToken apply to admin routes. If API_TOKEN is unset, those routes return 401. Relay publishing does not use an API token.

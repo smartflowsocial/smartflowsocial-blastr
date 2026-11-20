@@ -17,6 +17,8 @@ Include a description, steps to reproduce, impact, and a suggested fix if you ha
 
 The Blastr worker, its configuration, and its dependencies are in scope. Cloudflare’s own infrastructure, the Nostr protocol, and third-party relays are out of scope unless the bug is in how Blastr integrates with them.
 
+Publishing is gated by pubkey entitlement. Admin routes return 401 when `API_TOKEN` is unset. This service does not offer open public broadcasting.
+
 ## Response
 
 - Initial response within 2 business days

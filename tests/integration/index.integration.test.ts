@@ -99,6 +99,25 @@ describe("GET / (NIP-11)", () => {
   });
 });
 
+describe("Favicon", () => {
+  it("serves the original svg and ico", async () => {
+    const env = minimalValidEnv();
+    const svg = await fetchWithHeaders("/favicon.svg", env);
+    const ico = await fetchWithHeaders("/favicon.ico", env);
+    expect(svg.status).toBe(200);
+    expect(svg.headers.get("Content-Type")).toContain("image/svg+xml");
+    expect(await svg.text()).toContain("<svg");
+    expect(ico.status).toBe(200);
+    expect(ico.headers.get("Content-Type")).toBe("image/x-icon");
+    const bytes = new Uint8Array(await ico.arrayBuffer());
+    expect(bytes.byteLength).toBeGreaterThan(16);
+    expect(bytes[0]).toBe(0);
+    expect(bytes[1]).toBe(0);
+    expect(bytes[2]).toBe(1);
+    expect(bytes[3]).toBe(0);
+  });
+});
+
 describe("Index 404", () => {
   it("returns 404 for unknown path", async () => {
     const env = minimalValidEnv();

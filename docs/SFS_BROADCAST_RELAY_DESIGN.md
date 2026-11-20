@@ -22,14 +22,14 @@ Building this as a **managed publish infrastructure layer** for SmartFlowSocial 
 
 ## Current State vs. Target
 
-| Aspect                  | Previous (Rust)                                          | Current (Blastr / TypeScript)                                           |
+| Aspect                  | Mutiny Wallet Blastr (Rust, historical inspiration)      | SmartFlowSocial Blastr (TypeScript)                                     |
 | ----------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------- |
 | **Policy**              | None — every event treated the same                      | Pubkey → entitlement + relay policy (blacklist/whitelist)               |
 | **Relay universe**      | `api.nostr.watch/v1/online` + 8 fallbacks (“all online”) | Bounded **system relay universe** (curated/hybrid, health, allow/block) |
 | **Gating**              | Open to all                                              | Paid SFS subscription per pubkey                                        |
 | **Per-event relay set** | Same list for every event (split across queues)          | Resolved per pubkey from stored policy, **snapshotted on job**          |
 | **Identity**            | N/A                                                      | `event.pubkey` only (no session)                                        |
-| **NWC**                 | Special path: store in D1, no fanout                     | Spec doesn’t mention; decide if NWC stays or moves elsewhere            |
+| **NWC**                 | Special path: store in D1, no fanout                     | Not implemented. Kinds 23194 and 23195 are outside the allowlist.       |
 | **Ack**                 | OK after queue + KV write                                | OK = “accepted + queued”; delivery is async                             |
 | **Diagnostics**         | Minimal                                                  | Jobs + per-relay attempts, stored for diagnostics                       |
 
@@ -53,12 +53,7 @@ The Blastr service is a re-platform with a new data model and new services (poli
 
 ### 1. NWC (Nostr Wallet Connect)
 
-Current code has a special path: NWC request/response stored in D1 and not fanned out. The spec doesn’t define NWC.
-
-- **Option A:** Keep NWC in this service (same ingress, different path): still identify by pubkey, optionally require entitlement for NWC too.
-- **Option B:** Drop NWC from Blastr and handle it in another SFS service (cleaner separation; relay stays “broadcast only”).
-
-Recommendation: Decide explicitly; if keeping NWC, document it in the product definition and data model.
+Mutiny Wallet Blastr stored Nostr Wallet Connect requests and responses in D1 and did not fan them out. The SmartFlowSocial worker does not implement that path. NWC kinds are rejected by the event-kind allowlist. Adding NWC would be a new product decision, not a restoration of the earlier path.
 
 ### 2. Entitlement and Subscription Ownership
 
@@ -95,7 +90,7 @@ Spec: “Do not do slow relay probing inline.” So:
 - **Ingress:** Resolve relay set from policy + catalog (catalog can be cached in KV/memory), create job with **resolved relay list** and event payload, enqueue, return OK.
 - **Consumer:** Load job, open outbound WebSockets to each relay in the job’s list, send event, record attempts (and optionally update relay health from outcome).
 
-Current Rust code uses 10 queues and splits the **global** relay list by range. In the new model, each **job** carries its own relay list; you can still use multiple queues for throughput, but the unit of work is “one event + its target relays,” not “one slice of a global list.”
+Mutiny Wallet Blastr used 10 queues and split one global relay list by range. In this service, each **job** carries its own relay list on one queue. The unit of work is “one event + its target relays,” not “one slice of a global list.”
 
 ---
 
@@ -205,8 +200,8 @@ Do **not** make “all available relays” mean “any relay ever discovered.”
 ## Summary
 
 - **Design is sound;** the pubkey-scoped, policy-driven model is the right abstraction for “works from other clients” and paid gating.
-- **Current codebase** is a good reference for “event in → queue → fanout,” but policy, entitlement, and relay universe are new; the Blastr service is built as the SFS broadcast relay with a new data model.
-- **Decide:** NWC in or out; entitlement sync vs. live subscription API; exact placement of policy/catalog (Blastr vs. SFS app).
+- **SmartFlowSocial Blastr** accepts an event, queues a job, and fans that job out. Pubkey entitlement, relay policy, and the bounded relay catalog are part of this service. It is not the Mutiny Wallet codebase.
+- **Decide:** entitlement sync vs. live subscription API; exact placement of policy/catalog (Blastr vs. the SmartFlowSocial app). NWC is out unless a new product decision adds it.
 - **Implement:** Ingress = validate → entitlement → rate limit → resolve relays → enqueue job with snapshot → OK. Fanout = consume job → send to job’s relays → record attempts. Keep resolution logic shared and relay set bounded.
 
 This gives you a clear blueprint to implement the SFS Broadcast Relay in TypeScript on Cloudflare Workers without drifting from the spec.
