@@ -1,10 +1,13 @@
 import type { ExecutionContext } from "@cloudflare/workers-types";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 import { BlastrError } from "../../../src/errors";
 import { ConsoleLogger } from "../../../src/logger";
 import * as pipeline from "../../../src/transport/pipeline";
-import { handleWebSocketRelay } from "../../../src/transport/ws/relay";
+import {
+  handleWebSocketRelay,
+  WS_IDLE_CLOSE_MS,
+} from "../../../src/transport/ws/relay";
 import type { Env } from "../../../src/types";
 
 vi.mock("../../../src/transport/pipeline");
@@ -49,7 +52,7 @@ function mockEnv(): Env {
     PUBLISHED_NOTES: { get: vi.fn(), put: vi.fn() },
     BLASTR_RATE_LIMIT: { get: vi.fn(), put: vi.fn() },
     DB: {},
-    BLASTR_PUBLISH_QUEUE: { send: vi.fn().mockResolvedValue(undefined) }, // eslint-disable-line unicorn/no-useless-undefined -- mock typing
+    BLASTR_PUBLISH_QUEUE: { send: vi.fn().mockResolvedValue(undefined) },
   };
   return base as unknown as Env;
 }
@@ -79,6 +82,10 @@ describe("handleWebSocketRelay message handling", () => {
     return vi.mocked(mockServer.send).mock.calls.map((c) => c[0] as string);
   }
 
+  function expectClosed(): void {
+    expect(mockServer.close).toHaveBeenCalledTimes(1);
+  }
+
   function parseNotice(sent: string): string | null {
     try {
       const raw: unknown = JSON.parse(sent);
@@ -102,6 +109,7 @@ describe("handleWebSocketRelay message handling", () => {
     const first = sent[0];
     expect(first).toBeDefined();
     expect(parseNotice(first as string)).toBe(NOTICE_INVALID_JSON);
+    expectClosed();
   });
 
   it("sends NOTICE for valid JSON but not an array", async () => {
@@ -111,6 +119,7 @@ describe("handleWebSocketRelay message handling", () => {
     const first = sent[0];
     expect(first).toBeDefined();
     expect(parseNotice(first as string)).toBe(NOTICE_INVALID_FORMAT);
+    expectClosed();
   });
 
   it("sends NOTICE for array length < 2", async () => {
@@ -120,6 +129,7 @@ describe("handleWebSocketRelay message handling", () => {
     const first = sent[0];
     expect(first).toBeDefined();
     expect(parseNotice(first as string)).toBe(NOTICE_INVALID_FORMAT);
+    expectClosed();
   });
 
   it("sends NOTICE when first element is not a string (invalid format)", async () => {
@@ -129,6 +139,7 @@ describe("handleWebSocketRelay message handling", () => {
     const first = sent[0];
     expect(first).toBeDefined();
     expect(parseNotice(first as string)).toBe(NOTICE_INVALID_FORMAT);
+    expectClosed();
   });
 
   it("sends NOTICE for REQ (unsupported)", async () => {
@@ -140,6 +151,7 @@ describe("handleWebSocketRelay message handling", () => {
     const notice = parseNotice(first as string);
     expect(notice).toContain("unsupported");
     expect(notice).toContain("EVENT");
+    expectClosed();
   });
 
   it("sends NOTICE for CLOSE (unsupported)", async () => {
@@ -149,6 +161,7 @@ describe("handleWebSocketRelay message handling", () => {
     const first = sent[0];
     expect(first).toBeDefined();
     expect(parseNotice(first as string)).toContain("unsupported");
+    expectClosed();
   });
 
   it("sends NOTICE for AUTH (auth not required)", async () => {
@@ -158,6 +171,7 @@ describe("handleWebSocketRelay message handling", () => {
     const first = sent[0];
     expect(first).toBeDefined();
     expect(parseNotice(first as string)).toContain("auth not required");
+    expectClosed();
   });
 
   it("EVENT success: sends OK and no NOTICE", async () => {
@@ -183,6 +197,7 @@ describe("handleWebSocketRelay message handling", () => {
     expect(first).toBeDefined();
     expect(first).toBe(JSON.stringify(["OK", eventId, true, ""]));
     expect(parseNotice(first as string)).toBeNull();
+    expectClosed();
   });
 
   it("EVENT failure: sends OK with accepted false and no NOTICE", async () => {
@@ -210,6 +225,7 @@ describe("handleWebSocketRelay message handling", () => {
     expect(parsed[1]).toBe(eventId);
     expect(parsed[2]).toBe(false);
     expect(parseNotice(first as string)).toBeNull();
+    expectClosed();
   });
 
   it("EVENT with non-object payload: pipeline is called; sends OK with accepted false when pipeline fails", async () => {
@@ -232,6 +248,7 @@ describe("handleWebSocketRelay message handling", () => {
     const parsed = JSON.parse(first as string) as unknown[];
     expect(parsed[0]).toBe("OK");
     expect(parsed[2]).toBe(false);
+    expectClosed();
   });
 });
 
@@ -262,5 +279,86 @@ describe("handleWebSocketRelay close and error listeners", () => {
     expect(errorListener).toBeDefined();
     expect(() => errorListener?.()).not.toThrow();
     expect(logger.warn).toHaveBeenCalledWith("WS: error", {});
+  });
+
+  afterEach(() => {
+    mockServer.getCloseListener()?.();
+  });
+});
+
+describe("handleWebSocketRelay idle close", () => {
+  const logger = new ConsoleLogger();
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function sentNotices(
+    mockServer: ReturnType<typeof createMockServerWebSocket>,
+  ): string[] {
+    return vi
+      .mocked(mockServer.send)
+      .mock.calls.map((call) => call[0] as string);
+  }
+
+  it("closes with a NOTICE when no EVENT arrives", async () => {
+    const mockServer = createMockServerWebSocket();
+    handleWebSocketRelay(
+      mockServer as unknown as WebSocket,
+      mockEnv(),
+      logger,
+      {
+        waitUntil: vi.fn(),
+      } as unknown as ExecutionContext,
+    );
+
+    await vi.advanceTimersByTimeAsync(WS_IDLE_CLOSE_MS);
+
+    expect(mockServer.close).toHaveBeenCalledTimes(1);
+    expect(sentNotices(mockServer)).toEqual([
+      JSON.stringify(["NOTICE", "idle timeout: EVENT required"]),
+    ]);
+  });
+
+  it("does not send the idle NOTICE after an EVENT", async () => {
+    const mockServer = createMockServerWebSocket();
+    const env = mockEnv();
+    const eventId = "e".repeat(64);
+    vi.mocked(pipeline.runIngressPipeline).mockResolvedValue({
+      ok: true,
+      jobId: 1,
+      eventId,
+    });
+    handleWebSocketRelay(mockServer as unknown as WebSocket, env, logger, {
+      waitUntil: vi.fn(),
+    } as unknown as ExecutionContext);
+
+    const listener = mockServer.getMessageListener();
+    if (!listener) throw new Error("expected message listener");
+    const data = JSON.stringify([
+      "EVENT",
+      {
+        id: eventId,
+        pubkey: "b".repeat(64),
+        created_at: 0,
+        kind: 1,
+        tags: [],
+        content: "hi",
+        sig: "c".repeat(128),
+      },
+    ]);
+    listener({ data } as MessageEvent); // eslint-disable-line @typescript-eslint/consistent-type-assertions -- minimal mock
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(WS_IDLE_CLOSE_MS);
+
+    expect(mockServer.close).toHaveBeenCalledTimes(1);
+    expect(sentNotices(mockServer)).toEqual([
+      JSON.stringify(["OK", eventId, true, ""]),
+    ]);
   });
 });

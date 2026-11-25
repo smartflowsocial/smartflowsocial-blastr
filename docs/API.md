@@ -102,11 +102,12 @@ Standard Nostr relay protocol. Clients send Nostr messages (e.g. `["EVENT", even
 
 **WebSocket protocol (write-only):**
 
-- **Supported message:** Only `["EVENT", event]` is supported. The relay responds with NIP-01 `["OK", event_id, accepted, message]` (success or pipeline error).
-- **Invalid JSON:** The relay sends a single `["NOTICE", "invalid JSON"]` (or similar) so the client knows the message was rejected.
-- **Invalid format:** Valid JSON that is not a non-empty array of length ≥ 2, or whose first element is not a string, receives `["NOTICE", "invalid message format"]`.
-- **Unsupported message types:** `REQ`, `CLOSE`, or any other type than `EVENT` receives `["NOTICE", "unsupported: only EVENT is supported"]`.
-- **NIP-42 AUTH:** If the client sends `["AUTH", ...]`, the relay responds with `["NOTICE", "auth not required for this relay"]` (no challenge, no connection-level auth).
+- **Supported message:** Only `["EVENT", event]` is supported. The relay responds with NIP-01 `["OK", event_id, accepted, message]` (success or pipeline error), then closes the socket.
+- **Invalid JSON:** The relay sends `["NOTICE", "invalid JSON"]` and closes the socket.
+- **Invalid format:** Valid JSON that is not a non-empty array of length ≥ 2, or whose first element is not a string, receives `["NOTICE", "invalid message format"]` and closes the socket.
+- **Unsupported message types:** `REQ`, `CLOSE`, or any other type than `EVENT` receives `["NOTICE", "unsupported: only EVENT is supported"]` and closes the socket.
+- **NIP-42 AUTH:** If the client sends `["AUTH", ...]`, the relay responds with `["NOTICE", "auth not required for this relay"]` and closes the socket. There is no challenge and no connection-level auth.
+- **Idle:** If the client sends no `EVENT` within 15 seconds, the relay sends `["NOTICE", "idle timeout: EVENT required"]` and closes the socket.
 
 ---
 

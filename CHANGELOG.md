@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+- **Changed** — WebSocket ingress closes after every `NOTICE`, and closes with `["NOTICE", "idle timeout: EVENT required"]` if no `EVENT` arrives within 15 seconds. Idle Nostr sessions no longer stay open until the Workers runtime sheds the isolate.
+
 ## 1.0.0-rc.1 — 2026-11-20
 
 Prerelease of the current maintained worker. This is not stable `v1.0.0`, and creating the tag does not deploy Cloudflare.
